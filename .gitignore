@@ -1,0 +1,38 @@
+# Binaries and executable files
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test artifacts
+*.test
+*.out
+coverage.*
+profile.cov
+
+# Dependency directories
+# Gin projects using Go modules (recommended) do not need the vendor/ folder tracked
+vendor/
+
+# Go workspace file (specific to local development)
+go.work
+go.work.sum
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Optional: Air (live reload tool) temporary directory
+tmp/
