@@ -57,6 +57,24 @@ type Category struct {
 	DeletedAt gorm.DeletedAt `json:"deleted_at" gorm:"index"`
 }
 
+type Order struct {
+	ID        uint `json:"id" gorm:"primaryKey"`
+	User      `json:"user"`
+	OrderItem []OrderItem
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	DeletedAt gorm.DeletedAt `json:"deleted_at" gorm:"index"`
+}
+
+type OrderItem struct {
+	ID        uint `json:"id" gorm:"primaryKey"`
+	OrderID   uint `json:"order_id"`
+	Product   Product
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	DeletedAt gorm.DeletedAt `json:"deleted_at" gorm:"index"`
+}
+
 type LoginRequest struct {
 	Username string `json:"username" binding:"required"`
 	Password string `json:"password" binding:"required,min=6"`
