@@ -94,3 +94,12 @@ func ResponseJSON(c *gin.Context, status int, message string, data any) {
 	}
 	c.JSON(status, response)
 }
+
+type ProductInput struct {
+	Name        string  `json:"name"`
+	Description string  `json:"description"`
+	Price       float64 `json:"price"`
+	SKU         string  `json:"sku"`
+	Image       string  `json:"image"`
+	CategoryIDs []uint  `json:"category_ids"`
+}

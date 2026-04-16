@@ -46,22 +46,55 @@ func InitDB() {
 
 // CreateProduct godoc
 // @Summary Create a new product
-// @Description Create a new product with the provided details
+// @Description Create a new product and associate it with categories via category_ids (many-to-many)
 // @Tags Products
 // @Accept json
 // @Produce json
-// @Param product body Product true "Product data"
-// @Success 201 {object} Product
-// @Failure 400 {object} map[string]interface{}
+// @Param product body ProductInput true "Product data with category IDs"
+// @Success 201 {object} Product "Product with associated categories"
+// @Failure 400 {object} map[string]interface{} "Invalid input"
+// @Failure 500 {object} map[string]interface{} "Failed to create product"
 // @Router /products [post]
 func CreateProduct(c *gin.Context) {
-	var product Product
-	//bind the request body
-	if err := c.ShouldBindJSON(&product); err != nil {
+	var input ProductInput
+
+	if err := c.ShouldBindJSON(&input); err != nil {
 		ResponseJSON(c, http.StatusBadRequest, "Invalid input", nil)
 		return
 	}
-	DB.Create(&product)
+
+	// fetch categories
+	var categories []Category
+	if len(input.CategoryIDs) > 0 {
+		if err := DB.Where("id IN ?", input.CategoryIDs).Find(&categories).Error; err != nil {
+			ResponseJSON(c, http.StatusBadRequest, "Invalid categories", nil)
+			return
+		}
+	}
+
+	product := Product{
+		Name:        input.Name,
+		Description: input.Description,
+		Price:       input.Price,
+		SKU:         input.SKU,
+		Image:       input.Image,
+	}
+
+	// create product FIRST
+	if err := DB.Create(&product).Error; err != nil {
+		ResponseJSON(c, http.StatusInternalServerError, "Failed to create product", nil)
+		return
+	}
+
+	if len(categories) > 0 {
+		if err := DB.Model(&product).Association("Categories").Append(categories); err != nil {
+			ResponseJSON(c, http.StatusInternalServerError, "Failed to attach categories", nil)
+			return
+		}
+	}
+
+	DB.Preload("Categories").First(&product, product.ID)
+
 	ResponseJSON(c, http.StatusCreated, "Product created successfully", product)
 }
 
@@ -201,28 +234,63 @@ func GetProduct(c *gin.Context) {
 
 // UpdateProduct godoc
 // @Summary Update a product
-// @Description Update an existing product by ID
+// @Description Update an existing product and synchronize its categories (replaces existing category associations)
 // @Tags Products
 // @Accept json
 // @Produce json
 // @Param id path int true "Product ID"
-// @Param product body Product true "Updated product data"
-// @Success 200 {object} Product
-// @Failure 400 {object} map[string]interface{}
-// @Failure 404 {object} map[string]interface{}
+// @Param product body ProductInput true "Updated product data with category IDs"
+// @Success 200 {object} Product "Updated product with categories"
+// @Failure 400 {object} map[string]interface{} "Invalid input"
+// @Failure 404 {object} map[string]interface{} "Product not found"
+// @Failure 500 {object} map[string]interface{} "Failed to update product"
 // @Router /products/{id} [put]
 func UpdateProduct(c *gin.Context) {
 	var product Product
+
 	if err := DB.First(&product, c.Param("id")).Error; err != nil {
 		ResponseJSON(c, http.StatusNotFound, "Product not found", nil)
 		return
 	}
-	// bind the request body
-	if err := c.ShouldBindJSON(&product); err != nil {
+
+	var input ProductInput
+	if err := c.ShouldBindJSON(&input); err != nil {
 		ResponseJSON(c, http.StatusBadRequest, "Invalid input", nil)
 		return
 	}
-	DB.Save(&product)
+
+	// update scalar fields
+	product.Name = input.Name
+	product.Description = input.Description
+	product.Price = input.Price
+	product.SKU = input.SKU
+	product.Image = input.Image
+
+	if err := DB.Save(&product).Error; err != nil {
+		ResponseJSON(c, http.StatusInternalServerError, "Failed to update product", nil)
+		return
+	}
+
+	// sync join table
+	if input.CategoryIDs != nil {
+		var categories []Category
+
+		if len(input.CategoryIDs) > 0 {
+			if err := DB.Where("id IN ?", input.CategoryIDs).Find(&categories).Error; err != nil {
+				ResponseJSON(c, http.StatusBadRequest, "Invalid categories", nil)
+				return
+			}
+		}
+
+		// Replace = DELETE old + INSERT new in product_categories
+		if err := DB.Model(&product).Association("Categories").Replace(categories); err != nil {
+			ResponseJSON(c, http.StatusInternalServerError, "Failed to update categories", nil)
+			return
+		}
+	}
+
+	DB.Preload("Categories").First(&product, product.ID)
+
 	ResponseJSON(c, http.StatusOK, "Product updated successfully", product)
 }
 
