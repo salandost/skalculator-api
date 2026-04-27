@@ -2,9 +2,10 @@ package api
 
 import (
 	"database/sql/driver"
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
-	"time"
 )
 
 type UserRole string
@@ -70,6 +71,7 @@ type OrderItem struct {
 	ID        uint `json:"id" gorm:"primaryKey"`
 	OrderID   uint `json:"order_id"`
 	Product   Product
+	Amount    int            `json:"amount"`
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `json:"deleted_at" gorm:"index"`

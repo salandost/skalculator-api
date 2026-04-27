@@ -13,13 +13,13 @@ func main() {
 	r.Use(cors.Default()) // All origins allowed by default
 
 	//routes
-	r.POST("/product", api.CreateProduct)
-	r.GET("/product", api.GetProducts)
-	r.GET("/product/:id", api.GetProduct)
-	r.PUT("/product/:id", api.UpdateProduct)
-	r.DELETE("/product/:id", api.DeleteProduct)
+	r.POST("/product/", api.CreateProduct)
+	r.GET("/product/", api.GetProducts)
+	r.GET("/product/:id/", api.GetProduct)
+	r.PUT("/product/:id/", api.UpdateProduct)
+	r.DELETE("/product/:id/", api.DeleteProduct)
 
-	r.GET("/category", api.GetCategories)
+	r.GET("/category/", api.GetCategories)
 
 	// docs
 	// r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

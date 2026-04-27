@@ -7,12 +7,13 @@ import (
 	"os"
 	"time"
 
+	"skalculator/util"
+
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"skalculator/util"
 )
 
 var DB *gorm.DB
@@ -187,7 +188,7 @@ func GetProducts(c *gin.Context) {
 
 	// Pagination
 
-	limit := 10
+	limit := 12
 	page := 1
 
 	if l := c.Query("limit"); l != "" {
