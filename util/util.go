@@ -2,6 +2,9 @@ package util
 
 import (
 	"fmt"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
@@ -35,4 +38,42 @@ func CreateEnumIfNotExists(db *gorm.DB, enumName string, values []string) error 
 
 	createSQL := fmt.Sprintf("CREATE TYPE %s AS ENUM (%s);", enumName, valStr)
 	return db.Exec(createSQL).Error
+}
+
+func ParsePagination(c *gin.Context) (limit, page, offset int) {
+	limit = 12
+	page = 1
+
+	if l := c.Query("limit"); l != "" {
+		fmt.Sscanf(l, "%d", &limit)
+	}
+
+	if p := c.Query("page"); p != "" {
+		fmt.Sscanf(p, "%d", &page)
+	}
+
+	if limit <= 0 {
+		limit = 12
+	}
+	if limit > 100 {
+		limit = 100
+	}
+	if page <= 0 {
+		page = 1
+	}
+	offset = (page - 1) * limit
+	return
+}
+
+func PaginatedResponse(c *gin.Context, message string, items any, total int64, page, limit int) {
+	c.JSON(http.StatusOK, gin.H{
+		"status":  http.StatusOK,
+		"message": message,
+		"data": gin.H{
+			"items": items,
+			"total": total,
+			"page":  page,
+			"limit": limit,
+		},
+	})
 }
